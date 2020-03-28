@@ -64,15 +64,33 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        String title;
+        String text;
+        int color;
 
         if (requestCode == noteAdapter.getItemCount()) {
             if (resultCode == RESULT_OK) {
                 if (data != null){
-                    String title = data.getStringExtra(NoteActivity.TITLE);
-                    String text = data.getStringExtra(NoteActivity.TEXT);
-                    int color = data.getIntExtra(NoteActivity.COLOR, getResources().getColor(R.color.colorPrimary));
+                    title = data.getStringExtra(NoteActivity.TITLE);
+                    text = data.getStringExtra(NoteActivity.TEXT);
+                    color = data.getIntExtra(NoteActivity.COLOR, getResources()
+                                        .getColor(android.R.color.background_light));
 
                     noteAdapter.addNote(title, text, Calendar.getInstance().getTime(), color);
+                }
+            }
+        } else {
+            if (resultCode == RESULT_OK) {
+                if (data != null) {
+                    title = data.getStringExtra(NoteActivity.TITLE);
+                    text = data.getStringExtra(NoteActivity.TEXT);
+                    color = data.getIntExtra(NoteActivity.COLOR, getResources()
+                                            .getColor(android.R.color.background_light));
+
+                    Note note = new Note(-1, title, text, Calendar.getInstance().getTime(), color);
+                    note.setListPosition(requestCode);
+
+                    noteAdapter.updateNote(note);
                 }
             }
         }

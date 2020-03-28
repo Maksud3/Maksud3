@@ -10,6 +10,8 @@ public class Note {
     private Date date;
     private int color;
 
+    private int listPosition;
+
     public Note(){
 
     }
@@ -20,6 +22,10 @@ public class Note {
         this.text = text;
         this.date = date;
         this.color = color;
+    }
+
+    public long getId() {
+        return id;
     }
 
     public void setId(long id) {
@@ -56,5 +62,13 @@ public class Note {
 
     public void setColor(int color) {
         this.color = color;
+    }
+
+    public int getListPosition() {
+        return listPosition;
+    }
+
+    public void setListPosition(int listPosition) {
+        this.listPosition = listPosition;
     }
 }

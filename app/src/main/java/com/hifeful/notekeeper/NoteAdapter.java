@@ -2,8 +2,10 @@ package com.hifeful.notekeeper;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
@@ -11,9 +13,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
-import java.util.TimeZone;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -48,20 +50,37 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull ViewHolder holder, final int position) {
         CardView cardView = holder.cardView;
         TextView title = cardView.findViewById(R.id.title_text);
-        TextView note = cardView.findViewById(R.id.inside_text);
+        final TextView note = cardView.findViewById(R.id.inside_text);
         TextView textDate = cardView.findViewById(R.id.date_text);
 
         title.setText(notes.get(position).getTitle());
-        note.setText(notes.get(position).getText());
+
+        if (notes.get(position).getText().length() > 40)
+            note.setText(notes.get(position).getText().substring(0, 35));
+        else
+            note.setText(notes.get(position).getText());
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("h:mm a dd MMM ''yy", Locale.US);
-        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
         textDate.setText(dateFormat.format(notes.get(position).getDate()));
 
         cardView.setCardBackgroundColor(notes.get(position).getColor());
+
+        cardView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(context, NoteActivity.class);
+
+                intent.putExtra(NoteActivity.ACTION, true);
+                intent.putExtra(NoteActivity.TITLE, notes.get(position).getTitle());
+                intent.putExtra(NoteActivity.TEXT, notes.get(position).getText());
+                intent.putExtra(NoteActivity.COLOR, notes.get(position).getColor());
+
+                ((AppCompatActivity) context).startActivityForResult(intent, position);
+            }
+        });
     }
 
     @Override
@@ -79,6 +98,13 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
         new CreateNoteTask().execute(note);
     }
 
+    public void updateNote(Note note) {
+        note.setId(notes.get(note.getListPosition()).getId());
+        notes.set(note.getListPosition(), note);
+
+        new UpdateNoteTask().execute(notes.get(note.getListPosition()));
+    }
+
     @SuppressLint("StaticFieldLeak")
     private class CreateNoteTask extends AsyncTask<Note, Void, Note> {
         @Override
@@ -94,6 +120,23 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
             super.onPostExecute(note);
 
             notifyItemInserted(getItemCount());
+        }
+    }
+
+    @SuppressLint("StaticFieldLeak")
+    private class UpdateNoteTask extends AsyncTask<Note, Void, Note> {
+        @Override
+        protected Note doInBackground(Note... notes) {
+            noteDatabase.update(notes[0]);
+
+            return notes[0];
+        }
+
+        @Override
+        protected void onPostExecute(Note note) {
+            super.onPostExecute(note);
+
+            notifyItemChanged(note.getListPosition());
         }
     }
 }

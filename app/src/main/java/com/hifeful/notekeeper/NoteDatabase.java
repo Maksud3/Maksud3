@@ -41,6 +41,18 @@ public class NoteDatabase {
         note.setId(id);
     }
 
+    public void update(Note note) {
+        String whereClause = NoteDatabaseHelper.COLUMN_ID + "=" + note.getId();
+
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(NoteDatabaseHelper.COLUMN_TITLE, note.getTitle());
+        contentValues.put(NoteDatabaseHelper.COLUMN_TEXT, note.getText());
+        contentValues.put(NoteDatabaseHelper.COLUMN_COLOR, note.getColor());
+        contentValues.put(NoteDatabaseHelper.COLUMN_DATE, note.getDate().getTime());
+
+        database.update(NoteDatabaseHelper.TABLE_NOTES, contentValues, whereClause, null);
+    }
+
     public ArrayList<Note> getAll() {
         ArrayList<Note> notes = new ArrayList<>();
 
