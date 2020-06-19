@@ -81,38 +81,30 @@ public class NoteActivity extends AppCompatActivity {
 
                 saveButton.setImageDrawable(drawable);
 
-                saveButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        if (isEditing) {
-                            titleView.setInputType(InputType.TYPE_NULL);
-                            noteView.setInputType(InputType.TYPE_NULL);
-                            noteView.setSingleLine(false);
+                saveButton.setOnClickListener(v -> {
+                    if (isEditing) {
+                        titleView.setInputType(InputType.TYPE_NULL);
+                        noteView.setInputType(InputType.TYPE_NULL);
+                        noteView.setSingleLine(false);
 
-                            Drawable drawable = getResources()
-                                    .getDrawable(R.drawable.ic_edit_black_24dp);
-                            saveButton.setImageDrawable(drawable);
+                        Drawable drawable1 = getResources()
+                                .getDrawable(R.drawable.ic_edit_black_24dp);
+                        saveButton.setImageDrawable(drawable1);
 
-                            isEditing = false;
-                        } else {
-                            titleView.setInputType(InputType.TYPE_CLASS_TEXT);
-                            noteView.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+                        isEditing = false;
+                    } else {
+                        titleView.setInputType(InputType.TYPE_CLASS_TEXT);
+                        noteView.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_MULTI_LINE);
 
-                            Drawable drawable = getResources()
-                                    .getDrawable(R.drawable.ic_save_black_24dp);
-                            saveButton.setImageDrawable(drawable);
+                        Drawable drawable1 = getResources()
+                                .getDrawable(R.drawable.ic_save_black_24dp);
+                        saveButton.setImageDrawable(drawable1);
 
-                            isEditing = true;
-                        }
+                        isEditing = true;
                     }
                 });
             } else {
-                saveButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        onBackPressed();
-                    }
-                });
+                saveButton.setOnClickListener(v -> onBackPressed());
             }
         }
 

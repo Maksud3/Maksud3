@@ -11,17 +11,29 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.PopupWindow;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements RadioGroup.OnCheckedChangeListener {
     public static final String TAG = MainActivity.class.getSimpleName();
 
+    // UI
     private RecyclerView recyclerView;
+    private RadioGroup sortTypes;
+    private RadioGroup sortOrders;
+
+    // Variables
     private ArrayList<Note> notes;
     private NoteDatabase noteDatabase = new NoteDatabase(this);
     private NoteAdapter noteAdapter;
@@ -33,6 +45,22 @@ public class MainActivity extends AppCompatActivity {
 
         Toolbar toolbar = findViewById(R.id.main_toolbar);
         setSupportActionBar(toolbar);
+
+        ImageButton sortByButton = findViewById(R.id.sortBy_button);
+        sortByButton.setOnClickListener(v -> {
+            View popupView = View.inflate(this, R.layout.layout_popup_sort, null);
+            int width = LinearLayout.LayoutParams.WRAP_CONTENT;
+            int height = LinearLayout.LayoutParams.WRAP_CONTENT;
+
+            PopupWindow popupWindow = new PopupWindow(popupView, width, height, true);
+            popupWindow.setElevation(24);
+            popupWindow.showAsDropDown(sortByButton);
+
+            sortTypes = popupView.findViewById(R.id.sortTypes);
+            sortTypes.setOnCheckedChangeListener(this);
+            sortOrders = popupView.findViewById(R.id.sortOrders);
+            sortOrders.setOnCheckedChangeListener(this);
+        });
 
         recyclerView = findViewById(R.id.note_recycler);
 
@@ -67,14 +95,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        noteDatabase.open();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
+    protected void onDestroy() {
+        super.onDestroy();
         noteDatabase.close();
     }
 
@@ -113,13 +135,36 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onCheckedChanged(RadioGroup group, int checkedId) {
+        RadioButton sortType = sortTypes.findViewById(sortTypes.getCheckedRadioButtonId());
+        RadioButton sortOrder = sortOrders.findViewById(sortOrders.getCheckedRadioButtonId());
+
+        if (sortType.getText().equals("Title")) {
+            if (sortOrder.getText().equals("Ascending")) {
+                Collections.sort(notes, noteAdapter.sortByTitleAscending);
+                noteAdapter.notifyDataSetChanged();
+            } else if (sortOrder.getText().equals("Descending")) {
+                Collections.sort(notes, noteAdapter.sortByTitleDescending);
+                noteAdapter.notifyDataSetChanged();
+            }
+        } else if (sortType.getText().equals("Date")) {
+            if (sortOrder.getText().equals("Ascending")) {
+                Collections.sort(notes, noteAdapter.sortByDateAscending);
+                noteAdapter.notifyDataSetChanged();
+            } else if (sortOrder.getText().equals("Descending")) {
+                Collections.sort(notes, noteAdapter.sortByDateDescending);
+                noteAdapter.notifyDataSetChanged();
+            }
+        }
+    }
+
     @SuppressLint("StaticFieldLeak")
     private class GetAllNotesTask extends AsyncTask<Void, Void, ArrayList<Note>> {
 
         @Override
         protected ArrayList<Note> doInBackground(Void... voids) {
             noteDatabase.open();
-
             return noteDatabase.getAll();
         }
 

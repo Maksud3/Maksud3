@@ -1,7 +1,8 @@
 <resources>
     <string name="app_name">NoteKeeper</string>
 
-    <string name="sort_by">Sort by</string>
+    <string name="sort_by">Sort By</string>
+    <string name="order">Order</string>
     <string name="search">Search</string>
     <string name="save">Save</string>
 
@@ -15,4 +16,7 @@
     <string name="title">Title</string>
     <string name="note">Note</string>
     <string name="new_note">New note</string>
+
+    <string name="ascending">Ascending</string>
+    <string name="descending">Descending</string>
 </resources>

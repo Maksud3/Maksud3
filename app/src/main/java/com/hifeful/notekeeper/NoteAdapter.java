@@ -10,6 +10,7 @@ import android.widget.TextView;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Locale;
 
@@ -23,6 +24,12 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
     private Context context;
     public ArrayList<Note> notes;
     private NoteDatabase noteDatabase;
+
+    public Comparator<Note> sortByDateDescending = (note, n1) -> Long.compare(n1.getDate().getTime(), note.getDate().getTime());
+    public Comparator<Note> sortByDateAscending = (note, n1) -> Long.compare(note.getDate().getTime(), n1.getDate().getTime());
+
+    public Comparator<Note> sortByTitleDescending = (o1, o2) -> o2.getTitle().compareTo(o1.getText());
+    public Comparator<Note> sortByTitleAscending = (o1, o2) -> o1.getTitle().compareTo(o2.getText());
 
     public NoteAdapter(Context context, ArrayList<Note> notes, NoteDatabase noteDatabase) {
         this.context = context;
