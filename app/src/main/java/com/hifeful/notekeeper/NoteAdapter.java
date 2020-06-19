@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
@@ -22,7 +21,7 @@ import androidx.recyclerview.widget.RecyclerView;
 public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
 
     private Context context;
-    private ArrayList<Note> notes;
+    public ArrayList<Note> notes;
     private NoteDatabase noteDatabase;
 
     public NoteAdapter(Context context, ArrayList<Note> notes, NoteDatabase noteDatabase) {
@@ -68,18 +67,15 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
 
         cardView.setCardBackgroundColor(notes.get(position).getColor());
 
-        cardView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(context, NoteActivity.class);
+        cardView.setOnClickListener(v -> {
+            Intent intent = new Intent(context, NoteActivity.class);
 
-                intent.putExtra(NoteActivity.ACTION, true);
-                intent.putExtra(NoteActivity.TITLE, notes.get(position).getTitle());
-                intent.putExtra(NoteActivity.TEXT, notes.get(position).getText());
-                intent.putExtra(NoteActivity.COLOR, notes.get(position).getColor());
+            intent.putExtra(NoteActivity.ACTION, true);
+            intent.putExtra(NoteActivity.TITLE, notes.get(position).getTitle());
+            intent.putExtra(NoteActivity.TEXT, notes.get(position).getText());
+            intent.putExtra(NoteActivity.COLOR, notes.get(position).getColor());
 
-                ((AppCompatActivity) context).startActivityForResult(intent, position);
-            }
+            ((AppCompatActivity) context).startActivityForResult(intent, position);
         });
     }
 
@@ -105,6 +101,10 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
         new UpdateNoteTask().execute(notes.get(note.getListPosition()));
     }
 
+    public void deleteNote(long id) {
+        new DeleteNoteTask().execute(id);
+    }
+
     @SuppressLint("StaticFieldLeak")
     private class CreateNoteTask extends AsyncTask<Note, Void, Note> {
         @Override
@@ -128,7 +128,6 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
         @Override
         protected Note doInBackground(Note... notes) {
             noteDatabase.update(notes[0]);
-
             return notes[0];
         }
 
@@ -137,6 +136,16 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
             super.onPostExecute(note);
 
             notifyItemChanged(note.getListPosition());
+        }
+    }
+
+    @SuppressLint("StaticFieldLeak")
+    private class DeleteNoteTask extends AsyncTask<Long, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Long... id) {
+            noteDatabase.delete(id[0]);
+            return null;
         }
     }
 }

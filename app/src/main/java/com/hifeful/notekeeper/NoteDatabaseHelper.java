@@ -24,8 +24,8 @@ public class NoteDatabaseHelper extends SQLiteOpenHelper {
         db.execSQL("CREATE TABLE " + TABLE_NOTES + " (" +
                 COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 COLUMN_TITLE + " TEXT, " +
-                COLUMN_TEXT + " TEXT," +
-                COLUMN_DATE + " INT," +
+                COLUMN_TEXT + " TEXT, " +
+                COLUMN_DATE + " INT, " +
                 COLUMN_COLOR + " INT)");
     }
 

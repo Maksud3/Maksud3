@@ -53,6 +53,12 @@ public class NoteDatabase {
         database.update(NoteDatabaseHelper.TABLE_NOTES, contentValues, whereClause, null);
     }
 
+    public void delete(Long id) {
+        String whereClause = NoteDatabaseHelper.COLUMN_ID + "=" + id;
+
+        database.delete(NoteDatabaseHelper.TABLE_NOTES, whereClause, null);
+    }
+
     public ArrayList<Note> getAll() {
         ArrayList<Note> notes = new ArrayList<>();
 

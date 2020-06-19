@@ -45,25 +45,37 @@ public class MainActivity extends AppCompatActivity {
 //        notes.add(new Note("Dipa", "Zdarova", Calendar.getInstance().getTime(), Color.parseColor("#B9F6CA")));
 //        notes.add(new Note("Dipa", "Zdarova", Calendar.getInstance().getTime(), Color.parseColor("#FFD180")));
 
+        noteAdapter = new NoteAdapter(MainActivity.this, notes, noteDatabase);
+        recyclerView.setAdapter(noteAdapter);
+
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
 
-        SwipeController swipeController = new SwipeController();
+        SwipeController swipeController = new SwipeController(this, noteAdapter, recyclerView);
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(swipeController);
         itemTouchHelper.attachToRecyclerView(recyclerView);
 
         new GetAllNotesTask().execute();
 
         FloatingActionButton fab = findViewById(R.id.add_button);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, NoteActivity.class);
-                intent.putExtra(NoteActivity.ACTION, false);
+        fab.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, NoteActivity.class);
+            intent.putExtra(NoteActivity.ACTION, false);
 
-                startActivityForResult(intent, noteAdapter.getItemCount());
-            }
+            startActivityForResult(intent, noteAdapter.getItemCount());
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        noteDatabase.open();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        noteDatabase.close();
     }
 
     @Override
@@ -107,17 +119,17 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected ArrayList<Note> doInBackground(Void... voids) {
             noteDatabase.open();
-            notes = noteDatabase.getAll();
 
-            return notes;
+            return noteDatabase.getAll();
         }
 
         @Override
-        protected void onPostExecute(ArrayList<Note> notes) {
-            super.onPostExecute(notes);
-
-            noteAdapter = new NoteAdapter(MainActivity.this, notes, noteDatabase);
-            recyclerView.setAdapter(noteAdapter);
+        protected void onPostExecute(ArrayList<Note> dbNotes) {
+            if (dbNotes != null) {
+                notes.clear();
+                notes.addAll(dbNotes);
+                noteAdapter.notifyDataSetChanged();
+            }
         }
     }
 }
