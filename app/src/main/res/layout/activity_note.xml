@@ -5,11 +5,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:id="@+id/note_layout"
+    android:background="?android:colorBackground"
     tools:context=".NoteActivity">
 
-    <include
-        android:id="@+id/note_toolbar"
-        layout="@layout/toolbar_note"/>
+    <androidx.appcompat.widget.Toolbar android:id="@+id/note_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?android:colorBackground"
+        android:elevation="4dp"/>
 
     <EditText
         android:id="@+id/title_note"

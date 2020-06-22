@@ -11,5 +11,8 @@
     <color name="blueMaterial">#8C9EFF</color>
     <color name="greenMaterial">#B9F6CA</color>
     <color name="orangeMaterial">#FFD180</color>
+    <color name="yellowMaterial">#FFFF8D</color>
+    <color name="cyanMaterial">#84FFFF</color>
+    <color name="brownMaterial">#8D6E63</color>
 
 </resources>

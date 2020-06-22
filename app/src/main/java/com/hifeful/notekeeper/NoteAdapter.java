@@ -6,10 +6,12 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
+import android.widget.Filter;
 import android.widget.TextView;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Locale;
@@ -23,17 +25,54 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
 
     private Context context;
     public ArrayList<Note> notes;
+    public ArrayList<Note> notesForFilter;
     private NoteDatabase noteDatabase;
 
-    public Comparator<Note> sortByDateDescending = (note, n1) -> Long.compare(n1.getDate().getTime(), note.getDate().getTime());
-    public Comparator<Note> sortByDateAscending = (note, n1) -> Long.compare(note.getDate().getTime(), n1.getDate().getTime());
+    private String sortType;
+    private String sortOrder;
 
-    public Comparator<Note> sortByTitleDescending = (o1, o2) -> o2.getTitle().compareTo(o1.getText());
-    public Comparator<Note> sortByTitleAscending = (o1, o2) -> o1.getTitle().compareTo(o2.getText());
+    private Comparator<Note> sortByDateDescending = (note, n1) -> Long.compare(n1.getDate().getTime(), note.getDate().getTime());
+    private Comparator<Note> sortByDateAscending = (note, n1) -> Long.compare(note.getDate().getTime(), n1.getDate().getTime());
+
+    private Comparator<Note> sortByTitleDescending = (o1, o2) -> o2.getTitle().compareTo(o1.getText());
+    private Comparator<Note> sortByTitleAscending = (o1, o2) -> o1.getTitle().compareTo(o2.getText());
+
+    private Filter notesFilter = new Filter() {
+        @Override
+        protected FilterResults performFiltering(CharSequence constraint) {
+            ArrayList<Note> noteListFiltered = new ArrayList<>();
+
+            if (constraint == null || constraint.length() == 0) {
+                noteListFiltered.addAll(notesForFilter);
+            } else {
+                String filterPattern = constraint.toString().toLowerCase().trim();
+
+                for (Note note : notesForFilter) {
+                    if (note.getTitle().toLowerCase().contains(filterPattern)) {
+                        noteListFiltered.add(note);
+                    }
+                }
+            }
+
+            FilterResults results = new FilterResults();
+            results.values = noteListFiltered;
+
+            return results;
+        }
+
+        @Override
+        protected void publishResults(CharSequence constraint, FilterResults results) {
+            notes.clear();
+            notes.addAll((ArrayList)results.values);
+
+            notifyDataSetChanged();
+        }
+    };
 
     public NoteAdapter(Context context, ArrayList<Note> notes, NoteDatabase noteDatabase) {
         this.context = context;
         this.notes = notes;
+        this.notesForFilter = new ArrayList<>(this.notes);
         this.noteDatabase = noteDatabase;
     }
 
@@ -91,6 +130,40 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
         return notes.size();
     }
 
+    public Filter getNotesFilter() {
+        return notesFilter;
+    }
+
+    public void sortBy(String type, String order) {
+        if (type.equals("Title")) {
+            sortType = "Title";
+            if (order.equals("Ascending")) {
+                sortOrder = "Ascending";
+                Collections.sort(notes, sortByTitleAscending);
+                Collections.sort(notesForFilter, sortByTitleAscending);
+                notifyDataSetChanged();
+            } else if (order.equals("Descending")) {
+                sortOrder = "Descending";
+                Collections.sort(notes, sortByTitleDescending);
+                Collections.sort(notesForFilter, sortByTitleDescending);
+                notifyDataSetChanged();
+            }
+        } else if (type.equals("Date")) {
+            sortType = "Date";
+            if (order.equals("Ascending")) {
+                sortOrder = "Ascending";
+                Collections.sort(notes, sortByDateAscending);
+                Collections.sort(notesForFilter, sortByDateAscending);
+                notifyDataSetChanged();
+            } else if (order.equals("Descending")) {
+                sortOrder = "Descending";
+                Collections.sort(notes, sortByDateDescending);
+                Collections.sort(notesForFilter, sortByDateDescending);
+                notifyDataSetChanged();
+            }
+        }
+    }
+
     public void addNote(String title, String text, Date date, int color) {
         Note note = new Note();
         note.setTitle(title);
@@ -105,6 +178,8 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
         note.setId(notes.get(note.getListPosition()).getId());
         notes.set(note.getListPosition(), note);
 
+        notesForFilter.set(note.getListPosition(), note);
+
         new UpdateNoteTask().execute(notes.get(note.getListPosition()));
     }
 
@@ -118,6 +193,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
         protected Note doInBackground(Note... noteses) {
             noteDatabase.create(noteses[0]);
             notes.add(noteses[0]);
+            notesForFilter.add(noteses[0]);
 
             return noteses[0];
         }
@@ -127,6 +203,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
             super.onPostExecute(note);
 
             notifyItemInserted(getItemCount());
+            sortBy(sortType, sortOrder);
         }
     }
 
@@ -143,6 +220,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
             super.onPostExecute(note);
 
             notifyItemChanged(note.getListPosition());
+            sortBy(sortType, sortOrder);
         }
     }
 

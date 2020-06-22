@@ -55,6 +55,7 @@ public class SwipeController extends ItemTouchHelper.Callback {
                         @Override
                         public void onDismissed(Snackbar transientBottomBar, int event) {
                             if (event == Snackbar.Callback.DISMISS_EVENT_TIMEOUT) {
+                                noteAdapter.notesForFilter.remove(position);
                                 noteAdapter.deleteNote(deletedNote.getId());
                             }
                         }
