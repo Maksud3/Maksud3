@@ -1,18 +1,21 @@
 package com.hifeful.notekeeper;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import petrov.kristiyan.colorpicker.ColorPicker;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
@@ -31,11 +34,14 @@ public class NoteActivity extends AppCompatActivity {
 
     private boolean action;
     private boolean isEditing;
+    private boolean isNoteField = true;
+    private boolean isColorPickerOpened = false;
 
     private RelativeLayout noteLayout;
     private EditText titleView;
     private EditText noteView;
 
+    private ColorPicker colorPicker;
     private MenuItem editSaveItem;
     private MenuItem pickColorItem;
     private GradientDrawable gradientDrawable;
@@ -76,9 +82,10 @@ public class NoteActivity extends AppCompatActivity {
                 titleView.setText(intent.getStringExtra(TITLE));
                 noteView.setText(intent.getStringExtra(TEXT));
 
-                disableContentInteraction();
+                disableEditing();
             } else {
                 setTitle(R.string.new_note);
+                getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
                 titleView.requestFocus();
             }
         }
@@ -90,6 +97,63 @@ public class NoteActivity extends AppCompatActivity {
         note = noteView.getText().toString();
 
         setUpColors();
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putBoolean("mode", isEditing);
+        outState.putBoolean("colorPicker", isColorPickerOpened);
+        if (isColorPickerOpened) {
+            colorPicker.dismissDialog();
+        }
+        outState.putInt("startColor", mStartColor);
+        outState.putInt("color", mColor);
+
+        if (getCurrentFocus() != null)
+        {
+            int startSelection = 0;
+            int endSelection = 0;
+            switch (getCurrentFocus().getId()) {
+                case R.id.title_note:
+                    isNoteField = false;
+                    startSelection = ((EditText)getCurrentFocus()).getSelectionStart();
+                    endSelection = ((EditText)getCurrentFocus()).getSelectionEnd();
+                    break;
+                case R.id.text_note:
+                    isNoteField = true;
+                    startSelection = ((EditText)getCurrentFocus()).getSelectionStart();
+                    endSelection = ((EditText)getCurrentFocus()).getSelectionEnd();
+                    break;
+            }
+            outState.putBoolean("isNote", isNoteField);
+            outState.putInt("startSelection", startSelection);
+            outState.putInt("endSelection", endSelection);
+        }
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+
+        isEditing = savedInstanceState.getBoolean("mode");
+        isColorPickerOpened = savedInstanceState.getBoolean("colorPicker");
+        mStartColor = savedInstanceState.getInt("startColor");
+        mColor = savedInstanceState.getInt("color");
+        noteLayout.setBackgroundColor(mColor);
+
+        boolean isNote = savedInstanceState.getBoolean("isNote", true);
+        int startSelection = savedInstanceState.getInt("startSelection", noteView.length());
+        int endSelection = savedInstanceState.getInt("endSelection", noteView.length());
+
+        if (isEditing) {
+            enableEditing(isNote ? noteView : titleView, startSelection, endSelection);
+        }
+
+        if (isColorPickerOpened) {
+            showColorPicker();
+        }
     }
 
     @Override
@@ -114,7 +178,9 @@ public class NoteActivity extends AppCompatActivity {
         pickColorItem.setIcon(gradientDrawable);
 
         if (action) {
-            editSaveItem.setIcon(getResources().getDrawable(R.drawable.ic_edit_black_24dp));
+            editSaveItem.setIcon(isEditing
+                    ? getResources().getDrawable(R.drawable.ic_save_black_24dp)
+                    : getResources().getDrawable(R.drawable.ic_edit_black_24dp));
         }
 
         return true;
@@ -126,42 +192,16 @@ public class NoteActivity extends AppCompatActivity {
             case R.id.action_edit_save:
                 if (action) {
                     if (isEditing) {
-                        disableContentInteraction();
-                        hideSoftKeyboard();
-                        item.setIcon(getResources().getDrawable(R.drawable.ic_edit_black_24dp));
-                        isEditing = false;
+                        disableEditing();
                     } else {
-                        enableContentInteraction();
-                        showSoftKeyboard();
-                        item.setIcon(getResources().getDrawable(R.drawable.ic_save_black_24dp));
-
-                        noteView.requestFocus();
-                        noteView.setSelection(noteView.length());
-
-                        isEditing = true;
+                        enableEditing(noteView, noteView.length(), noteView.length());
                     }
                 } else {
                     onBackPressed();
                 }
                 break;
             case R.id.action_color_picker:
-                ColorPicker colorPicker = new ColorPicker(this);
-                colorPicker.setColors(colors);
-                colorPicker.setDefaultColorButton(mColor);
-                colorPicker.setOnChooseColorListener(new ColorPicker.OnChooseColorListener() {
-                    @Override
-                    public void onChooseColor(int position, int color) {
-                        mColor = color;
-                        noteLayout.setBackgroundColor(mColor);
-                        gradientDrawable.setColor(mColor);
-                    }
-
-                    @Override
-                    public void onCancel() {
-
-                    }
-                });
-                colorPicker.show();
+                showColorPicker();
                 break;
         }
 
@@ -179,7 +219,6 @@ public class NoteActivity extends AppCompatActivity {
 
                 setResult(RESULT_OK, intent);
             }
-
         }else {
             if (checkChanges()){
                 intent.putExtra(TITLE, titleView.getText().toString());
@@ -190,6 +229,33 @@ public class NoteActivity extends AppCompatActivity {
             }
         }
         super.onBackPressed();
+    }
+
+    private void enableEditing(EditText field, int startSelection, int endSelection) {
+        enableContentInteraction();
+        if (getCurrentFocus() != null) {
+            showSoftKeyboard(getCurrentFocus());
+        }
+
+        if (!isEditing) {
+            editSaveItem.setIcon(getResources().getDrawable(R.drawable.ic_save_black_24dp));
+        }
+
+        field.requestFocus();
+        field.setSelection(startSelection, endSelection);
+
+        isEditing = true;
+    }
+
+    private void disableEditing() {
+        if (getCurrentFocus() != null) {
+            hideSoftKeyboard(getCurrentFocus());
+        }
+        disableContentInteraction();
+        if (isEditing) {
+            editSaveItem.setIcon(getResources().getDrawable(R.drawable.ic_edit_black_24dp));
+        }
+        isEditing = false;
     }
 
     private void disableContentInteraction() {
@@ -218,16 +284,16 @@ public class NoteActivity extends AppCompatActivity {
         noteView.requestFocus();
     }
 
-    private void showSoftKeyboard() {
-        InputMethodManager inputMethodManager = (InputMethodManager)
-                this.getSystemService(Activity.INPUT_METHOD_SERVICE);
-
-        inputMethodManager.showSoftInput(noteView, InputMethodManager.SHOW_IMPLICIT);
+    private void showSoftKeyboard(View view) {
+        if(view.requestFocus()) {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT);
+        }
     }
 
-    private void hideSoftKeyboard() {
-        InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
-        imm.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0);
+    private void hideSoftKeyboard(View view) {
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 
     private void setUpColors() {
@@ -252,6 +318,32 @@ public class NoteActivity extends AppCompatActivity {
                 R.color.cyanMaterial) & 0x00ffffff));
         colors.add("#" + Integer.toHexString(ContextCompat.getColor(this,
                 R.color.brownMaterial) & 0x00ffffff));
+    }
+
+    private void showColorPicker() {
+        colorPicker = new ColorPicker(this);
+        colorPicker.setColors(colors);
+        colorPicker.setDefaultColorButton(mColor);
+        colorPicker.setOnFastChooseColorListener(new ColorPicker.OnFastChooseColorListener() {
+            @Override
+            public void setOnFastChooseColorListener(int position, int color) {
+                if (color != 0) {
+                    mColor = color;
+                    noteLayout.setBackgroundColor(mColor);
+                    gradientDrawable.setColor(mColor);
+                }
+                isColorPickerOpened = false;
+            }
+
+            @Override
+            public void onCancel() {
+            }
+        });
+        colorPicker.show();
+        isColorPickerOpened = true;
+        colorPicker.getmDialog().setOnDismissListener(dialog -> {
+            isColorPickerOpened = false;
+        });
     }
 
     private boolean checkChanges() {

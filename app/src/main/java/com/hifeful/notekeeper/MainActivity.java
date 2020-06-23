@@ -1,5 +1,6 @@
 package com.hifeful.notekeeper;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
@@ -12,12 +13,10 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -43,6 +42,7 @@ public class MainActivity extends AppCompatActivity implements RadioGroup.OnChec
     private RecyclerView recyclerView;
 
     private View popupView;
+    private PopupWindow popupWindow;
     private RadioGroup sortTypes;
     private RadioGroup sortOrders;
 
@@ -52,6 +52,8 @@ public class MainActivity extends AppCompatActivity implements RadioGroup.OnChec
     private ArrayList<Note> notes;
     private NoteDatabase noteDatabase = new NoteDatabase(this);
     private NoteAdapter noteAdapter;
+
+    private boolean isSortByOpened = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,6 +100,28 @@ public class MainActivity extends AppCompatActivity implements RadioGroup.OnChec
     }
 
     @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putBoolean("sortBy", isSortByOpened);
+
+        if (isSortByOpened) {
+            popupWindow.dismiss();
+        }
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+
+        isSortByOpened = savedInstanceState.getBoolean("sortBy");
+
+        if (isSortByOpened) {
+            findViewById(R.id.main_layout).post(this::showSortBy);
+        }
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
 
@@ -124,17 +148,7 @@ public class MainActivity extends AppCompatActivity implements RadioGroup.OnChec
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_sortBy) {
-            int width = LinearLayout.LayoutParams.WRAP_CONTENT;
-            int height = LinearLayout.LayoutParams.WRAP_CONTENT;
-
-            PopupWindow popupWindow = new PopupWindow(popupView, width, height, true);
-            popupWindow.setElevation(24);
-
-            popupWindow.showAtLocation(popupView, Gravity.END | Gravity.TOP, 0,
-                    locateView(toolbar).bottom);
-
-            sortTypes.setOnCheckedChangeListener(this);
-            sortOrders.setOnCheckedChangeListener(this);
+            showSortBy();
         }
 
         return super.onOptionsItemSelected(item);
@@ -173,6 +187,22 @@ public class MainActivity extends AppCompatActivity implements RadioGroup.OnChec
                 }
             }
         }
+    }
+
+    private void showSortBy() {
+        int width = LinearLayout.LayoutParams.WRAP_CONTENT;
+        int height = LinearLayout.LayoutParams.WRAP_CONTENT;
+
+        popupWindow = new PopupWindow(popupView, width, height, true);
+        popupWindow.setElevation(24);
+
+        popupWindow.showAtLocation(popupView, Gravity.END | Gravity.TOP, 0,
+                locateView(toolbar).bottom);
+        isSortByOpened = true;
+        popupWindow.setOnDismissListener(() -> isSortByOpened = false);
+
+        sortTypes.setOnCheckedChangeListener(this);
+        sortOrders.setOnCheckedChangeListener(this);
     }
 
     @Override
