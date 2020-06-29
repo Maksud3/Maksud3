@@ -18,6 +18,8 @@
     <string name="note">Note</string>
     <string name="new_note">New note</string>
 
+    <string name="by_title">Title</string>
+    <string name="by_date">Date</string>
     <string name="ascending">Ascending</string>
     <string name="descending">Descending</string>
 </resources>

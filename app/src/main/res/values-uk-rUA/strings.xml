@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NoteKeeper</string>
+    <string name="sort_by">Відсортувати за</string>
+    <string name="search">Пошук</string>
+    <string name="save">Зберегти</string>
+    <string name="pick_color">Вибрати колір</string>
+    <string name="note_title">Заголовок</string>
+    <string name="text_date">Дата</string>
+    <string name="text_note">Вся запись</string>
+    <string name="add">Добавити</string>
+    <string name="undo">Відмінити</string>
+    <string name="title">Заголовок</string>
+    <string name="note">Запис</string>
+    <string name="new_note">Новий запис</string>
+    <string name="by_title">Заголовком</string>
+    <string name="by_date">Датою</string>
+    <string name="ascending">За зростанням</string>
+    <string name="descending">За спаданням</string>
+    <string name="order">Порядок</string>
+</resources>

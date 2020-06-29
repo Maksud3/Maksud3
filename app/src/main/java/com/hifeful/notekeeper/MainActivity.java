@@ -17,6 +17,7 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -54,6 +55,12 @@ public class MainActivity extends AppCompatActivity implements RadioGroup.OnChec
     private NoteAdapter noteAdapter;
 
     private boolean isSortByOpened = false;
+    private boolean isRestored = false;
+
+    public static String titleName;
+    public static String dateName;
+    public static String ascendingName;
+    public static String descendingName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,6 +73,11 @@ public class MainActivity extends AppCompatActivity implements RadioGroup.OnChec
         popupView = View.inflate(this, R.layout.layout_popup_sort, null);
         sortTypes = popupView.findViewById(R.id.sortTypes);
         sortOrders = popupView.findViewById(R.id.sortOrders);
+
+        titleName = getResources().getString(R.string.by_title);
+        dateName = getResources().getString(R.string.by_date);
+        ascendingName = getResources().getString(R.string.ascending);
+        descendingName = getResources().getString(R.string.descending);
 
         recyclerView = findViewById(R.id.note_recycler);
 
@@ -81,7 +93,9 @@ public class MainActivity extends AppCompatActivity implements RadioGroup.OnChec
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(swipeController);
         itemTouchHelper.attachToRecyclerView(recyclerView);
 
-        new GetAllNotesTask().execute();
+        if (!isRestored) {
+            new GetAllNotesTask().execute();
+        }
 
         FloatingActionButton fab = findViewById(R.id.add_button);
         fab.setOnClickListener(v -> {
@@ -94,6 +108,15 @@ public class MainActivity extends AppCompatActivity implements RadioGroup.OnChec
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (isRestored) {
+            new GetAllNotesTask().execute();
+        }
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         noteDatabase.close();
@@ -103,11 +126,11 @@ public class MainActivity extends AppCompatActivity implements RadioGroup.OnChec
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
 
-        outState.putBoolean("sortBy", isSortByOpened);
-
         if (isSortByOpened) {
             popupWindow.dismiss();
+            isSortByOpened = true;
         }
+        outState.putBoolean("sortBy", isSortByOpened);
     }
 
     @Override
@@ -115,10 +138,6 @@ public class MainActivity extends AppCompatActivity implements RadioGroup.OnChec
         super.onRestoreInstanceState(savedInstanceState);
 
         isSortByOpened = savedInstanceState.getBoolean("sortBy");
-
-        if (isSortByOpened) {
-            findViewById(R.id.main_layout).post(this::showSortBy);
-        }
     }
 
     @Override
@@ -190,6 +209,7 @@ public class MainActivity extends AppCompatActivity implements RadioGroup.OnChec
     }
 
     private void showSortBy() {
+        Log.i(TAG, "showSortBy: Tell me");
         int width = LinearLayout.LayoutParams.WRAP_CONTENT;
         int height = LinearLayout.LayoutParams.WRAP_CONTENT;
 
@@ -214,9 +234,9 @@ public class MainActivity extends AppCompatActivity implements RadioGroup.OnChec
     private void loadSortStates() {
         SharedPreferences sharedPreferences = getPreferences(Context.MODE_PRIVATE);
         ((RadioButton)sortTypes.getChildAt(sharedPreferences.getInt(SORT_TYPE, 1)))
-                .setChecked(true);
+                .toggle();
         ((RadioButton)sortOrders.getChildAt(sharedPreferences.getInt(SORT_ORDER, 1)))
-                .setChecked(true);
+                .toggle();
         sortNotes();
     }
 
@@ -226,26 +246,26 @@ public class MainActivity extends AppCompatActivity implements RadioGroup.OnChec
 
         SharedPreferences sharedPreferences = getPreferences(Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putInt(SORT_TYPE, sortType.getText().equals("Title") ? 0 : 1);
-        editor.putInt(SORT_ORDER, sortOrder.getText().equals("Ascending") ? 0 : 1);
+        editor.putInt(SORT_TYPE, sortType.getText().equals(titleName) ? 0 : 1);
+        editor.putInt(SORT_ORDER, sortOrder.getText().equals(ascendingName) ? 0 : 1);
         editor.apply();
     }
 
     private void sortNotes() {
-        RadioButton sortType = sortTypes.findViewById(sortTypes.getCheckedRadioButtonId());
-        RadioButton sortOrder = sortOrders.findViewById(sortOrders.getCheckedRadioButtonId());
+        RadioButton sortType = popupView.findViewById(sortTypes.getCheckedRadioButtonId());
+        RadioButton sortOrder = popupView.findViewById(sortOrders.getCheckedRadioButtonId());
 
-        if (sortType.getText().equals("Title")) {
-            if (sortOrder.getText().equals("Ascending")) {
-                noteAdapter.sortBy("Title", "Ascending");
-            } else if (sortOrder.getText().equals("Descending")) {
-                noteAdapter.sortBy("Title", "Descending");
+        if (sortType.getText().equals(titleName)) {
+            if (sortOrder.getText().equals(ascendingName)) {
+                noteAdapter.sortBy(titleName, ascendingName);
+            } else if (sortOrder.getText().equals(descendingName)) {
+                noteAdapter.sortBy(titleName, descendingName);
             }
-        } else if (sortType.getText().equals("Date")) {
-            if (sortOrder.getText().equals("Ascending")) {
-                noteAdapter.sortBy("Date", "Ascending");
-            } else if (sortOrder.getText().equals("Descending")) {
-                noteAdapter.sortBy("Date", "Descending");
+        } else if (sortType.getText().equals(dateName)) {
+            if (sortOrder.getText().equals(ascendingName)) {
+                noteAdapter.sortBy(dateName, ascendingName);
+            } else if (sortOrder.getText().equals(descendingName)) {
+                noteAdapter.sortBy(dateName, descendingName);
             }
         }
     }
@@ -278,6 +298,7 @@ public class MainActivity extends AppCompatActivity implements RadioGroup.OnChec
 
         @Override
         protected void onPostExecute(ArrayList<Note> dbNotes) {
+            Log.i(TAG, "onPostExecute: ");
             if (dbNotes != null) {
                 notes.clear();
                 notes.addAll(dbNotes);
@@ -285,6 +306,9 @@ public class MainActivity extends AppCompatActivity implements RadioGroup.OnChec
                 noteAdapter.notifyDataSetChanged();
 
                 loadSortStates();
+                if (isSortByOpened) {
+                    showSortBy();
+                }
             }
         }
     }

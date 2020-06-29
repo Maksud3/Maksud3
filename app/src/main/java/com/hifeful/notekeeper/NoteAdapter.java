@@ -34,8 +34,8 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
     private Comparator<Note> sortByDateDescending = (note, n1) -> Long.compare(n1.getDate().getTime(), note.getDate().getTime());
     private Comparator<Note> sortByDateAscending = (note, n1) -> Long.compare(note.getDate().getTime(), n1.getDate().getTime());
 
-    private Comparator<Note> sortByTitleDescending = (o1, o2) -> o2.getTitle().compareTo(o1.getText());
-    private Comparator<Note> sortByTitleAscending = (o1, o2) -> o1.getTitle().compareTo(o2.getText());
+    private Comparator<Note> sortByTitleDescending = (o1, o2) -> o2.getTitle().compareTo(o1.getTitle());
+    private Comparator<Note> sortByTitleAscending = (o1, o2) -> o1.getTitle().compareTo(o2.getTitle());
 
     private Filter notesFilter = new Filter() {
         @Override
@@ -135,28 +135,28 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
     }
 
     public void sortBy(String type, String order) {
-        if (type.equals("Title")) {
-            sortType = "Title";
-            if (order.equals("Ascending")) {
-                sortOrder = "Ascending";
+        if (type.equals(MainActivity.titleName)) {
+            sortType = MainActivity.titleName;
+            if (order.equals(MainActivity.ascendingName)) {
+                sortOrder = MainActivity.ascendingName;
                 Collections.sort(notes, sortByTitleAscending);
                 Collections.sort(notesForFilter, sortByTitleAscending);
                 notifyDataSetChanged();
-            } else if (order.equals("Descending")) {
-                sortOrder = "Descending";
+            } else if (order.equals(MainActivity.descendingName)) {
+                sortOrder = MainActivity.descendingName;
                 Collections.sort(notes, sortByTitleDescending);
                 Collections.sort(notesForFilter, sortByTitleDescending);
                 notifyDataSetChanged();
             }
-        } else if (type.equals("Date")) {
-            sortType = "Date";
-            if (order.equals("Ascending")) {
-                sortOrder = "Ascending";
+        } else if (type.equals(MainActivity.dateName)) {
+            sortType = MainActivity.dateName;
+            if (order.equals(MainActivity.ascendingName)) {
+                sortOrder = MainActivity.ascendingName;
                 Collections.sort(notes, sortByDateAscending);
                 Collections.sort(notesForFilter, sortByDateAscending);
                 notifyDataSetChanged();
-            } else if (order.equals("Descending")) {
-                sortOrder = "Descending";
+            } else if (order.equals(MainActivity.descendingName)) {
+                sortOrder = MainActivity.descendingName;
                 Collections.sort(notes, sortByDateDescending);
                 Collections.sort(notesForFilter, sortByDateDescending);
                 notifyDataSetChanged();

@@ -24,11 +24,11 @@
         <RadioButton android:id="@+id/sortBy_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/note_title"/>
+            android:text="@string/by_title"/>
         <RadioButton android:id="@+id/sortBy_date"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/text_date"/>
+            android:text="@string/by_date"/>
     </RadioGroup>
 
     <View
